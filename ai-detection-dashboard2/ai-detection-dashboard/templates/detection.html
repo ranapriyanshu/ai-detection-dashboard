@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Detection Interface - AI Detection System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3 mb-4">
+            <i class="fas fa-search me-2"></i>AI Detection Interface
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-upload me-2"></i>Upload & Analyze
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="detectionForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="detectionType" class="form-label">Detection Type</label>
+                        <select class="form-select" id="detectionType" name="detection_type" required>
+                            <option value="">Select Detection Type</option>
+                            <option value="deepfake">Deepfake Detection</option>
+                            <option value="object">Object Detection</option>
+                            <option value="fraud">Fraud Detection</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fileUpload" class="form-label">Upload File</label>
+                        <input type="file" class="form-control" id="fileUpload" name="file" 
+                               accept=".png,.jpg,.jpeg,.gif,.mp4,.avi,.mov,.json,.csv" required>
+                        <div class="form-text">
+                            Supported formats: Images (PNG, JPG, JPEG, GIF), Videos (MP4, AVI, MOV), Data (JSON, CSV)
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="generateReport" checked>
+                            <label class="form-check-label" for="generateReport">
+                                Generate court-ready evidence report
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                        <i class="fas fa-cogs me-1"></i>Analyze File
+                    </button>
+                </form>
+
+                <div id="uploadProgress" class="mt-3" style="display: none;">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Detection Types
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="detectionAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#deepfakeInfo">
+                                <i class="fas fa-video me-2"></i>Deepfake Detection
+                            </button>
+                        </h2>
+                        <div id="deepfakeInfo" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                Analyzes images and videos to detect artificially generated or manipulated content using advanced neural networks.
+                                <br><br>
+                                <strong>Supported:</strong> MP4, AVI, MOV, JPG, PNG
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#objectInfo">
+                                <i class="fas fa-eye me-2"></i>Object Detection
+                            </button>
+                        </h2>
+                        <div id="objectInfo" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                Identifies and locates objects within images or video frames using YOLO algorithm.
+                                <br><br>
+                                <strong>Supported:</strong> JPG, PNG, GIF, MP4, AVI
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#fraudInfo">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Fraud Detection
+                            </button>
+                        </h2>
+                        <div id="fraudInfo" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                Analyzes transaction data or documents to identify potential fraudulent activities.
+                                <br><br>
+                                <strong>Supported:</strong> JSON, CSV, PDF, JPG, PNG
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Section -->
+<div class="row mt-4" id="resultsSection" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Analysis Results
+                </h5>
+            </div>
+            <div class="card-body" id="resultsContent">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('detectionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const progressDiv = document.getElementById('uploadProgress');
+    const resultsSection = document.getElementById('resultsSection');
+
+    // Show progress
+    analyzeBtn.disabled = true;
+    analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Analyzing...';
+    progressDiv.style.display = 'block';
+
+    // Simulate progress
+    let progress = 0;
+    const progressBar = progressDiv.querySelector('.progress-bar');
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        progressBar.style.width = progress + '%';
+    }, 200);
+
+    fetch('/detection', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+
+        setTimeout(() => {
+            progressDiv.style.display = 'none';
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerHTML = '<i class="fas fa-cogs me-1"></i>Analyze File';
+
+            if (data.success) {
+                displayResults(data.result, data.detection_id);
+                resultsSection.style.display = 'block';
+            } else {
+                alert('Analysis failed: ' + (data.error || 'Unknown error'));
+            }
+        }, 500);
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        progressDiv.style.display = 'none';
+        analyzeBtn.disabled = false;
+        analyzeBtn.innerHTML = '<i class="fas fa-cogs me-1"></i>Analyze File';
+        alert('Analysis failed: ' + error.message);
+    });
+});
+
+function displayResults(result, detectionId) {
+    const resultsContent = document.getElementById('resultsContent');
+
+    let resultHtml = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-search me-2"></i>Detection Result</h6>
+                <div class="alert alert-${getPredictionClass(result.prediction)}" role="alert">
+                    <strong>Prediction:</strong> ${result.prediction.toUpperCase()}<br>
+                    <strong>Confidence:</strong> ${(result.confidence * 100).toFixed(1)}%
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-info-circle me-2"></i>Analysis Details</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Type:</strong> ${result.type}</li>
+                    <li><strong>Timestamp:</strong> ${new Date(result.timestamp).toLocaleString()}</li>
+                    ${result.metadata ? `<li><strong>Method:</strong> ${result.metadata.detection_method}</li>` : ''}
+                </ul>
+            </div>
+        </div>
+    `;
+
+    if (result.detections && result.detections.length > 0) {
+        resultHtml += `
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6><i class="fas fa-list me-2"></i>Detected Objects</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr><th>Object</th><th>Confidence</th><th>Location</th></tr>
+                            </thead>
+                            <tbody>
+                                ${result.detections.map(d => `
+                                    <tr>
+                                        <td>${d.class}</td>
+                                        <td>${(d.confidence * 100).toFixed(1)}%</td>
+                                        <td>[${d.bbox.map(x => Math.round(x)).join(', ')}]</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    resultHtml += `
+        <div class="row mt-3">
+            <div class="col-12">
+                <a href="/generate_report/${detectionId}" class="btn btn-success me-2" target="_blank">
+                    <i class="fas fa-file-pdf me-1"></i>Generate Evidence Report
+                </a>
+                <button class="btn btn-outline-primary" onclick="location.reload()">
+                    <i class="fas fa-redo me-1"></i>New Analysis
+                </button>
+            </div>
+        </div>
+    `;
+
+    resultsContent.innerHTML = resultHtml;
+}
+
+function getPredictionClass(prediction) {
+    const positive = ['real', 'legitimate', 'authentic', 'objects_detected'];
+    return positive.includes(prediction.toLowerCase()) ? 'success' : 'danger';
+}
+</script>
+{% endblock %}

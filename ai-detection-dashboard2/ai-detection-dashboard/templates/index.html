@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Detection & Evidence Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-bn3dNvKKcItDEB0n1T2LUoqDTkoChXWfQkOZPywY6PmWH8CGYQkOHu01kXkNVdBa5Wp0dQO3+V1YRd1zF7eHtA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+  <div class="app flex">
+    <aside class="sidebar flex-col">
+      <h2 class="logo m-0 py-16 px-16">AI&nbsp;Evidence</h2>
+      <nav class="nav flex-col">
+        <a href="#" class="nav__link active" data-section="dashboard"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+        <a href="#" class="nav__link" data-section="detection"><i class="fas fa-microscope"></i><span>Detection</span></a>
+        <a href="#" class="nav__link" data-section="reports"><i class="fas fa-file-alt"></i><span>Reports</span></a>
+      </nav>
+    </aside>
+
+    <main class="main-content flex-col">
+      <!-- Dashboard -->
+      <section id="dashboard" data-section="dashboard" class="section show">
+        <div class="container">
+          <h1 class="mb-8">Dashboard Overview</h1>
+          <div id="statsGrid" class="stats-grid mb-8"></div>
+          <!-- Charts -->
+          <div class="charts-grid mb-8">
+            <div class="card"><div class="card__body"><h3 class="mb-8">Activity Timeline</h3><div class="chart-container" style="position:relative;height:300px;"><canvas id="activityChart"></canvas></div></div></div>
+            <div class="card"><div class="card__body"><h3 class="mb-8">Detection Distribution</h3><div class="chart-container" style="position:relative;height:300px;"><canvas id="distributionChart"></canvas></div></div></div>
+          </div>
+          <!-- Recent detections -->
+          <h3 class="mb-8">Recent Detections</h3>
+          <div class="card mb-8"><div class="card__body"><div class="table-wrapper"><table id="detectionsTable" class="table"><thead><tr><th>ID</th><th>Type</th><th>File</th><th>Confidence</th><th>Timestamp</th><th>Action</th></tr></thead><tbody></tbody></table></div></div></div>
+        </div>
+      </section>
+
+      <!-- Detection -->
+      <section id="detection" data-section="detection" class="section hidden">
+        <div class="container">
+          <h1 class="mb-8">New Detection</h1>
+          <div class="card mb-8"><div class="card__body">
+            <div class="form-group"><label for="detectionType" class="form-label">Detection Type</label><select id="detectionType" class="form-control"></select></div>
+            <div class="form-group"><label class="form-label">Upload File</label>
+              <div id="dropzone" class="dropzone flex flex-col items-center justify-center">
+                <i class="fas fa-cloud-upload-alt fa-2x mb-8"></i>
+                <p class="m-0">Drag & drop or <span class="link-primary">browse</span></p>
+                <input type="file" id="fileInput" />
+              </div>
+            </div>
+            <button id="analyzeBtn" class="btn btn--primary mt-8" disabled>Analyze</button>
+            <progress id="progressBar" value="0" max="100" class="progress-bar mt-8 hidden"></progress>
+            <div id="analysisResult" class="mt-8"></div>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- Reports -->
+      <section id="reports" data-section="reports" class="section hidden">
+        <div class="container">
+          <h1 class="mb-8">Evidence Reports</h1>
+          <div class="flex justify-between items-center mb-8"><input type="text" id="reportSearch" class="form-control" placeholder="Search reports…" /></div>
+          <div class="card"><div class="card__body"><div class="table-wrapper"><table id="reportsTable" class="table"><thead><tr><th data-sort="id">Report ID</th><th data-sort="type">Type</th><th data-sort="generated_at">Generated At</th><th>Status</th><th>Download</th></tr></thead><tbody></tbody></table></div></div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <!-- Modal -->
+  <div id="modal" class="modal hidden"><div class="modal__content card"><div class="card__header flex justify-between items-center"><h3 class="m-0">Report Preview</h3><button id="modalClose" class="btn btn--secondary btn--sm">&times;</button></div><div class="card__body" id="modalBody"></div></div></div>
+</body>
+</html>

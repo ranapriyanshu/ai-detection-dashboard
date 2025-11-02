@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Detection System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3 mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>Detection Dashboard
+        </h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="total-detections">0</h4>
+                        <p class="card-text">Total Detections</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-search fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="deepfake-detections">0</h4>
+                        <p class="card-text">Deepfake Analysis</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-video fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="object-detections">0</h4>
+                        <p class="card-text">Object Detection</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-eye fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title" id="fraud-detections">0</h4>
+                        <p class="card-text">Fraud Detection</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Detection Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Detection Types
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="typeChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Detections -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Detections
+                </h5>
+                <a href="{{ url_for('detection') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>New Detection
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Type</th>
+                                <th>File</th>
+                                <th>Result</th>
+                                <th>Confidence</th>
+                                <th>Timestamp</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detection in detections %}
+                            <tr>
+                                <td>{{ detection.id }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ detection.detection_type.title() }}</span>
+                                </td>
+                                <td>{{ detection.file_path.split('/')[-1] }}</td>
+                                <td>
+                                    {% set result = detection.result | from_json %}
+                                    <span class="badge bg-{{ 'success' if result.prediction == 'real' or result.prediction == 'legitimate' else 'danger' }}">
+                                        {{ result.prediction.title() }}
+                                    </span>
+                                </td>
+                                <td>{{ "%.1f%%" | format(detection.confidence * 100) }}</td>
+                                <td>{{ detection.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('generate_report', detection_id=detection.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-file-pdf me-1"></i>Report
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">
+                                    No detections yet. <a href="{{ url_for('detection') }}">Start your first analysis</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Load dashboard statistics
+fetch('/api/detection_stats')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('total-detections').textContent = data.total_detections;
+        document.getElementById('deepfake-detections').textContent = data.deepfake_detections;
+        document.getElementById('object-detections').textContent = data.object_detections;
+        document.getElementById('fraud-detections').textContent = data.fraud_detections;
+
+        // Update charts
+        updateCharts(data);
+    });
+
+function updateCharts(data) {
+    // Activity Chart
+    const activityCtx = document.getElementById('activityChart').getContext('2d');
+    new Chart(activityCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Detections',
+                data: [12, 19, 3, 5, 2, 3],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Type Chart
+    const typeCtx = document.getElementById('typeChart').getContext('2d');
+    new Chart(typeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Deepfake', 'Object', 'Fraud'],
+            datasets: [{
+                data: [data.deepfake_detections, data.object_detections, data.fraud_detections],
+                backgroundColor: ['#28a745', '#17a2b8', '#ffc107']
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+}
+</script>
+{% endblock %}
